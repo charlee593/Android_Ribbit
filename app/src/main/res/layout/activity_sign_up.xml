@@ -15,7 +15,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:focusable="false"
+        android:focusable="true"
         android:hint="@string/username_hint"/>
 
     <EditText

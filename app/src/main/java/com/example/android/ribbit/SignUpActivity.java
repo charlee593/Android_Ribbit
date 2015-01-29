@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,7 +24,7 @@ public class SignUpActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
-        mUsername = (EditText)findViewById(R.id.usernameField);
+        mUsername = (EditText)findViewById(R.id.username);
         mPassword = (EditText) findViewById(R.id.passwordField);
         mEmail = (EditText) findViewById(R.id.emailField);
         mSignUpButton = (Button) findViewById(R.id.signupButton);
@@ -40,6 +41,13 @@ public class SignUpActivity extends Activity {
 
                 if(username.isEmpty() || password.isEmpty() || email.isEmpty()){
                     AlertDialog.Builder builder= new AlertDialog.Builder(SignUpActivity.this);
+                    builder.setMessage(getString(R.string.signup_error_message));
+                    builder.setTitle(getString(R.string.signup_error_title));
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                else{
 
                 }
             }

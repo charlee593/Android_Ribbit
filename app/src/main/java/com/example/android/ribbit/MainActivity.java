@@ -1,8 +1,14 @@
 package com.example.android.ribbit;
 
 import android.app.ActionBar;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -11,6 +17,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.parse.ParseUser;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
@@ -31,6 +41,88 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
+    private static final int TAKE_PIC = 0;
+    private static final int TAKE_VID = 1;
+    private static final int PICK_PIC = 2;
+    private static final int PICK_VID = 3;
+
+    private static final int MEDIATYPE_PIC = 4;
+    private static final int MEDIATYPE_VID = 5;
+
+    private Uri mediaUri;
+
+    protected DialogInterface.OnClickListener dialogListener = new DialogInterface.OnClickListener(){
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case 0:
+                    Intent takePicIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    mediaUri = getOutputMediaFileUri(MEDIATYPE_PIC);
+                    takePicIntent.putExtra(MediaStore.EXTRA_OUTPUT, mediaUri);
+                    startActivityForResult(takePicIntent, TAKE_PIC);
+                case 1:
+                    Intent takeVidIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+                    mediaUri = getOutputMediaFileUri(MEDIATYPE_PIC);
+                    takeVidIntent.putExtra(MediaStore.EXTRA_OUTPUT, mediaUri);
+                    takeVidIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 10);
+                    takeVidIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
+                    startActivityForResult(takeVidIntent, TAKE_PIC);
+                case 2:
+                    break;
+                case 3:
+                    break;
+            }
+        }
+
+        private Uri getOutputMediaFileUri(int mediatype) {
+            if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+                File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES), "Ribbit");
+                // This location works best if you want the created images to be shared
+                // between applications and persist after your app has been uninstalled.
+
+                // Create the storage directory if it does not exist
+                if (! mediaStorageDir.exists()){
+                    if (! mediaStorageDir.mkdirs()){
+                        Log.d("Ribbit", "failed to create directory");
+                        return null;
+                    }
+                }
+
+                // Create a media file name
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                File mediaFile;
+                if (mediatype == MEDIATYPE_PIC){
+                    mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                            "IMG_"+ timeStamp + ".jpg");
+                } else if(mediatype == MEDIATYPE_VID) {
+                    mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                            "VID_"+ timeStamp + ".mp4");
+                } else {
+                    return null;
+                }
+
+                return Uri.fromFile(mediaFile);
+            }
+            else {
+                return null;
+            }
+
+        }
+    };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == RESULT_OK){
+            Intent storeIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            storeIntent.setData(mediaUri);
+            sendBroadcast(storeIntent);
+        }
+        else if(resultCode != RESULT_CANCELED){
+            Log.i("Store pic","Error storing pic");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +202,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         else if (id == R.id.action_edit_friends) {
             Intent intent = new Intent(this, EditFriendsActivity.class);
             startActivity(intent);
+        }
+        else if (id == R.id.action_camera){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setItems(R.array.camera_options, dialogListener);
+            Dialog dialog = builder.create();
+            dialog.show();
         }
 
         return super.onOptionsItemSelected(item);

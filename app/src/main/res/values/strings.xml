@@ -23,5 +23,11 @@
     <string name="empty_friend_message">Add friends to begin.</string>
     <string name="edit_friends_label">Edit Friends</string>
     <string name="title_activity_edit_friends">EditFriendsActivity</string>
+    <array name="camera_options">
+        <item>Take Picture</item>
+        <item>Take Video</item>
+        <item>Picture Gallery</item>
+        <item>Video Gallery</item>
+    </array>
 
 </resources>

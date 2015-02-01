@@ -15,10 +15,14 @@ import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.parse.ParseUser;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -60,16 +64,24 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                     mediaUri = getOutputMediaFileUri(MEDIATYPE_PIC);
                     takePicIntent.putExtra(MediaStore.EXTRA_OUTPUT, mediaUri);
                     startActivityForResult(takePicIntent, TAKE_PIC);
+                    break;
                 case 1:
                     Intent takeVidIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
                     mediaUri = getOutputMediaFileUri(MEDIATYPE_PIC);
                     takeVidIntent.putExtra(MediaStore.EXTRA_OUTPUT, mediaUri);
                     takeVidIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 10);
                     takeVidIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
-                    startActivityForResult(takeVidIntent, TAKE_PIC);
+                    startActivityForResult(takeVidIntent, TAKE_VID);
+                    break;
                 case 2:
+                    Intent pickPic = new Intent(Intent.ACTION_GET_CONTENT);
+                    pickPic.setType("image/*");
+                    startActivityForResult(pickPic, PICK_VID);
                     break;
                 case 3:
+                    Intent pickVid = new Intent(Intent.ACTION_GET_CONTENT);
+                    pickVid.setType("video/*");
+                    startActivityForResult(pickVid, PICK_VID);
                     break;
             }
         }
@@ -115,9 +127,42 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_OK){
-            Intent storeIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            storeIntent.setData(mediaUri);
-            sendBroadcast(storeIntent);
+            if(resultCode == PICK_PIC || resultCode == PICK_VID){
+                mediaUri = data.getData();
+                if (requestCode == PICK_VID) {
+                    // make sure the file is less than 10 MB
+                    int fileSize = 0;
+                    InputStream inputStream = null;
+
+                    try {
+                        inputStream = getContentResolver().openInputStream(mediaUri);
+                        fileSize = inputStream.available();
+                    }
+                    catch (FileNotFoundException e) {
+                        Toast.makeText(this, "File not found", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    catch (IOException e) {
+                        Toast.makeText(this, "Error openning the file", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    finally {
+                        try {
+                            inputStream.close();
+                        } catch (IOException e) { /* Intentionally blank */ }
+                    }
+
+                    if (fileSize >= 1024 * 1024 * 10) {
+                        Toast.makeText(this, "File too large, try file under 10Mb", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                }
+            }
+            else{
+                Intent storeIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                storeIntent.setData(mediaUri);
+                sendBroadcast(storeIntent);
+            }
         }
         else if(resultCode != RESULT_CANCELED){
             Log.i("Store pic","Error storing pic");
